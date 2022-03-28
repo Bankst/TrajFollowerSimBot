@@ -35,12 +35,12 @@ import static frc.robot.Constants.DrivetrainConstants.*;
 import java.util.List;
 
 public class DriveSubsystem extends SubsystemBase {
-	
+
 	private final WPI_TalonFX m_leftMaster = new WPI_TalonFX(LEFT_MASTER_TALON_ID);
 	private final WPI_TalonFX m_leftSlave = new WPI_TalonFX(LEFT_SLAVE_TALON_ID);
 	private final WPI_TalonFX m_rightMaster = new WPI_TalonFX(RIGHT_MASTER_TALON_ID);
 	private final WPI_TalonFX m_rightSlave = new WPI_TalonFX(RIGHT_SLAVE_TALON_ID);
-	
+
 	private final WPI_Pigeon2 m_imu = new WPI_Pigeon2(0);
 
 	private final DifferentialDrive m_diffDrive = new DifferentialDrive(m_leftMaster, m_rightMaster);
@@ -48,28 +48,29 @@ public class DriveSubsystem extends SubsystemBase {
 	private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(m_imu.getRotation2d());
 	private final Field2d m_field = new Field2d();
 
-	private final StatorCurrentLimitConfiguration CUR_LIMIT_CFG = new StatorCurrentLimitConfiguration(true, CURRENT_LIMIT, CURRENT_LIMIT + 10, 0.25);
+	private final StatorCurrentLimitConfiguration CUR_LIMIT_CFG = new StatorCurrentLimitConfiguration(true, CURRENT_LIMIT,
+			CURRENT_LIMIT + 10, 0.25);
 
 	// Sim
 	private final TalonFXSimCollection m_leftMotorSim = m_leftMaster.getSimCollection();
 	private final TalonFXSimCollection m_rightMotorSim = m_rightMaster.getSimCollection();
 	private final BasePigeonSimCollection m_imuSim = m_imu.getSimCollection();
 
-	// private final LinearSystem<N2, N2, N2> m_drivePlant = LinearSystemId.identifyDrivetrainSystem(AVG_KV, AVG_KA, ANGULAR_KV, ANGULAR_KA);
+	// private final LinearSystem<N2, N2, N2> m_drivePlant =
+	// LinearSystemId.identifyDrivetrainSystem(AVG_KV, AVG_KA, ANGULAR_KV,
+	// ANGULAR_KA);
 	private final LinearSystem<N2, N2, N2> m_drivePlant = LinearSystemId.createDrivetrainVelocitySystem(
-		MOTORS, MASS_KG, 
-		WHEEL_DIAMETER_METERS / 2.0,
-		TRACKWIDTH_METERS, 
-		MOI_KGM2, GEARBOX_RATIO
-	);
+			MOTORS, MASS_KG,
+			WHEEL_DIAMETER_METERS / 2.0,
+			TRACKWIDTH_METERS,
+			MOI_KGM2, GEARBOX_RATIO);
 	private final DifferentialDrivetrainSim m_driveSim = new DifferentialDrivetrainSim(
-		m_drivePlant, 
-		MOTORS,
-		GEARBOX_RATIO,
-		TRACKWIDTH_METERS,
-		WHEEL_DIAMETER_METERS / 2.0,
-		null
-	);
+			m_drivePlant,
+			MOTORS,
+			GEARBOX_RATIO,
+			TRACKWIDTH_METERS,
+			WHEEL_DIAMETER_METERS / 2.0,
+			null);
 
 	private final RamseteController m_ramsete = new RamseteController();
 	private final PIDController m_leftPid = new PIDController(LEFT_KP, 0, 0);
@@ -120,7 +121,7 @@ public class DriveSubsystem extends SubsystemBase {
 	public double getRightMetersPerSec() {
 		return nativeUnitsToVelocityMetersPerSec(m_rightMaster.getSelectedSensorVelocity());
 	}
-	
+
 	@Override
 	public void periodic() {
 		m_odometry.update(m_imu.getRotation2d(), getLeftMeters(), getRightMeters());
@@ -129,56 +130,52 @@ public class DriveSubsystem extends SubsystemBase {
 
 	@Override
 	public void simulationPeriodic() {
-		if (!RobotState.isEnabled()) return;
-		
+		if (!RobotState.isEnabled())
+			return;
+
 		m_leftMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
 		m_rightMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
 
 		m_driveSim.setInputs(
-			m_leftMotorSim.getMotorOutputLeadVoltage(),
-			-m_rightMotorSim.getMotorOutputLeadVoltage()
-		);
+				m_leftMotorSim.getMotorOutputLeadVoltage(),
+				-m_rightMotorSim.getMotorOutputLeadVoltage());
 
 		m_driveSim.update(0.02);
 
 		m_leftMotorSim.setIntegratedSensorRawPosition(
-			distanceToNativeUnits(m_driveSim.getLeftPositionMeters())
-		);
+				distanceToNativeUnits(m_driveSim.getLeftPositionMeters()));
 		m_leftMotorSim.setIntegratedSensorVelocity(
-			velocityToNativeUnits(m_driveSim.getLeftVelocityMetersPerSecond())
-		);
+				velocityToNativeUnits(m_driveSim.getLeftVelocityMetersPerSecond()));
 
 		m_rightMotorSim.setIntegratedSensorRawPosition(
-			distanceToNativeUnits(-m_driveSim.getRightPositionMeters())
-		);
+				distanceToNativeUnits(-m_driveSim.getRightPositionMeters()));
 		m_rightMotorSim.setIntegratedSensorVelocity(
-			velocityToNativeUnits(-m_driveSim.getRightVelocityMetersPerSecond())
-		);
+				velocityToNativeUnits(-m_driveSim.getRightVelocityMetersPerSecond()));
 
 		m_imuSim.setRawHeading(m_driveSim.getHeading().getDegrees());
 	}
 
-	private int distanceToNativeUnits(double positionMeters){
-    double wheelRotations = positionMeters/(Math.PI * WHEEL_DIAMETER_METERS);
-    double motorRotations = wheelRotations * GEARBOX_RATIO;
-    int sensorCounts = (int)(motorRotations * 2048);
-    return sensorCounts;
-  }
+	private int distanceToNativeUnits(double positionMeters) {
+		double wheelRotations = positionMeters / (Math.PI * WHEEL_DIAMETER_METERS);
+		double motorRotations = wheelRotations * GEARBOX_RATIO;
+		int sensorCounts = (int) (motorRotations * 2048);
+		return sensorCounts;
+	}
 
-  private int velocityToNativeUnits(double velocityMetersPerSecond){
-    double wheelRotationsPerSecond = velocityMetersPerSecond/(Math.PI * WHEEL_DIAMETER_METERS);
-    double motorRotationsPerSecond = wheelRotationsPerSecond * GEARBOX_RATIO;
-    double motorRotationsPer100ms = motorRotationsPerSecond / 10;
-    int sensorCountsPer100ms = (int)(motorRotationsPer100ms * 2048);
-    return sensorCountsPer100ms;
-  }
+	private int velocityToNativeUnits(double velocityMetersPerSecond) {
+		double wheelRotationsPerSecond = velocityMetersPerSecond / (Math.PI * WHEEL_DIAMETER_METERS);
+		double motorRotationsPerSecond = wheelRotationsPerSecond * GEARBOX_RATIO;
+		double motorRotationsPer100ms = motorRotationsPerSecond / 10;
+		int sensorCountsPer100ms = (int) (motorRotationsPer100ms * 2048);
+		return sensorCountsPer100ms;
+	}
 
-  private double nativeUnitsToDistanceMeters(double sensorCounts){
-    double motorRotations = (double)sensorCounts / 2048;
-    double wheelRotations = motorRotations / GEARBOX_RATIO;
-    double positionMeters = wheelRotations * (Math.PI * WHEEL_DIAMETER_METERS);
-    return positionMeters;
-  }
+	private double nativeUnitsToDistanceMeters(double sensorCounts) {
+		double motorRotations = (double) sensorCounts / 2048;
+		double wheelRotations = motorRotations / GEARBOX_RATIO;
+		double positionMeters = wheelRotations * (Math.PI * WHEEL_DIAMETER_METERS);
+		return positionMeters;
+	}
 
 	private double nativeUnitsToVelocityMetersPerSec(double sensorCountsPer100ms) {
 		double motorRotationsPer100ms = (double) sensorCountsPer100ms / 2048;
@@ -229,16 +226,15 @@ public class DriveSubsystem extends SubsystemBase {
 		}, this).withTimeout(0.125);
 
 		var ramseteCommand = new RamseteCommand(
-			traj,
-			this::getPose,
-			m_ramsete,
-			AVG_FEEDFORWARD,
-			m_diffDriveKinematics,
-			this::getWheelSpeeds,
-			m_leftPid, m_rightPid,
-			this::setMotorVoltages,
-			this
-		);
+				traj,
+				this::getPose,
+				m_ramsete,
+				AVG_FEEDFORWARD,
+				m_diffDriveKinematics,
+				this::getWheelSpeeds,
+				m_leftPid, m_rightPid,
+				this::setMotorVoltages,
+				this);
 
 		return showOnFieldCommand.andThen(resetPoseCommand).andThen(ramseteCommand);
 	}
