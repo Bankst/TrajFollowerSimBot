@@ -198,6 +198,7 @@ public class DriveSubsystem extends SubsystemBase {
 			m_rightMotorSim.setIntegratedSensorRawPosition(0);
 
 			m_driveSim.setPose(newPose);
+			m_driveSim.update(0.02);
 		}
 
 		m_odometry.resetPosition(newPose, m_imu.getRotation2d());
