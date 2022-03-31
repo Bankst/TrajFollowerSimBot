@@ -25,3 +25,9 @@ pluginManagement {
         }
     }
 }
+
+include 'GrouchLib'
+rootProject.children[0].buildFileName = "GrouchLib.gradle"
+if (!rootProject.children[0].buildFile.isFile()) {
+    rootProject.children[0].buildFileName = "build.gradle"
+}

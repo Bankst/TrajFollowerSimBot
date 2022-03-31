@@ -52,7 +52,7 @@ public class RobotContainer {
     // var midPose2_1 = new Pose2d(8.87, 7.71, Rotation2d.fromDegrees(18.43));
     // var midPose2_2 = new Pose2d()
     // var traj2 = 
-    var threeBallTraj = PathPlanner.loadPath("3 Ball Auto - Fender", 4.5, 6);
-    return m_driveSubsys.getRamseteCommand(threeBallTraj, false);
+    var threeBallTraj = PathPlanner.loadPath("3 Ball Auto", 2, 3);
+    return m_driveSubsys.getRamseteCommand(threeBallTraj, true);
   }
 }

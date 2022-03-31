@@ -18,16 +18,31 @@
       "/FMSInfo": "FMSInfo",
       "/LiveWindow/DriveSubsystem": "Subsystem",
       "/LiveWindow/Ungrouped/DifferentialDrive[1]": "DifferentialDrive",
+      "/LiveWindow/Ungrouped/PIDController[10]": "PIDController",
       "/LiveWindow/Ungrouped/PIDController[1]": "PIDController",
       "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[3]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[4]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[5]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[6]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[7]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[8]": "PIDController",
+      "/LiveWindow/Ungrouped/PIDController[9]": "PIDController",
       "/LiveWindow/Ungrouped/Pigeon 2 [0]": "Gyro",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
+      "/LiveWindow/Ungrouped/Talon FX [1]": "Motor Controller",
       "/LiveWindow/Ungrouped/Talon FX [2]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Talon FX [3]": "Motor Controller",
       "/LiveWindow/Ungrouped/Talon FX [4]": "Motor Controller",
       "/SmartDashboard/Field": "Field2d"
     },
     "windows": {
       "/SmartDashboard/Field": {
+        "RamseteCommandTraj": {
+          "arrows": false,
+          "style": "Track",
+          "weight": 2.0
+        },
         "image": "C:\\Users\\Banks\\Documents\\Robotics\\832\\2022\\FRC2022-Robot\\field22.png",
         "window": {
           "visible": true
@@ -35,11 +50,36 @@
       }
     }
   },
+  "NetworkTables": {
+    "SmartDashboard": {
+      "DTSubsys": {
+        "open": true
+      },
+      "OscarRamsete": {
+        "FF": {
+          "open": true
+        },
+        "WheelSpeed": {
+          "open": true
+        },
+        "WheelSpeeds": {
+          "open": true
+        },
+        "open": true
+      },
+      "Sim": {
+        "open": true
+      },
+      "open": true
+    }
+  },
   "Plot": {
     "Plot <0>": {
       "plots": [
         {
-          "height": 174,
+          "height": 341,
+          "legendLocation": 1,
+          "legendOutside": true,
           "series": [
             {
               "color": [
@@ -48,7 +88,7 @@
                 0.6901960968971252,
                 1.0
               ],
-              "id": "Joystick[0] Axis[1]"
+              "id": "NT:/SmartDashboard/OscarRamsete/WheelSpeed/LeftTarget"
             },
             {
               "color": [
@@ -57,7 +97,75 @@
                 0.32156863808631897,
                 1.0
               ],
-              "id": "Joystick[0] Axis[4]"
+              "id": "NT:/SmartDashboard/OscarRamsete/WheelSpeeds/LeftReal"
+            },
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/DTSubsys/LeftMotorVelo"
+            }
+          ]
+        },
+        {
+          "height": 341,
+          "legendLocation": 1,
+          "legendOutside": true,
+          "series": [
+            {
+              "color": [
+                0.8666667342185974,
+                0.5176470875740051,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/OscarRamsete/WheelSpeed/RightTarget"
+            },
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/OscarRamsete/WheelSpeeds/RightReal"
+            },
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/DTSubsys/RightMotorVelo"
+            }
+          ]
+        },
+        {
+          "height": 341,
+          "legendLocation": 1,
+          "legendOutside": true,
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/Sim/LeftMps"
+            },
+            {
+              "color": [
+                0.8666667342185974,
+                0.5176470875740051,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/Sim/RightMps"
             }
           ]
         }

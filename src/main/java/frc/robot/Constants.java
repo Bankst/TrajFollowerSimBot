@@ -14,6 +14,9 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
+import frc.team832.lib.motors.Gearbox;
+import frc.team832.lib.motors.Motor;
+import frc.team832.lib.motors.WheeledPowerTrain;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -37,9 +40,13 @@ public final class Constants {
 
 		/** Mechanical Characteristics **/
 		public static final double GEARBOX_RATIO = 9.09090909; // 11:60, 18:30
+		public static final Gearbox GEARBOX_OBJ = new Gearbox(11.0 / 60.0, 18.0 / 30.0);
+		public static final double GEARBOX_OBJ_RATIO = GEARBOX_OBJ.totalReduction;
 		public static final DCMotor MOTORS = DCMotor.getFalcon500(2);
 		public static final double WHEEL_DIAMETER_INCHES = 6.25;
-		public static final double WHEEL_DIAMETER_METERS = Units.inchesToMeters(WHEEL_DIAMETER_INCHES);
+		public static final double WHEEL_DIAMETER_METERS = 0.15875;
+		public static final double WHEEL_CIRCUMFERENCE_METERS = Math.PI * WHEEL_DIAMETER_METERS;
+		public static final WheeledPowerTrain POWER_TRAIN = new WheeledPowerTrain(GEARBOX_OBJ, Motor.kFalcon500, 2, WHEEL_DIAMETER_INCHES, GEARBOX_OBJ_RATIO);
 		public static final double WHEELBASE_INCHES = 26.0;
 		public static final double WHEELBASE_METERS = Units.inchesToMeters(WHEELBASE_INCHES);
 		public static final double TRACKWIDTH_METERS = Units.inchesToMeters(25.975);
