@@ -40,7 +40,7 @@ public final class Constants {
 
 		/** Mechanical Characteristics **/
 		public static final double GEARBOX_RATIO = 9.09090909; // 11:60, 18:30
-		public static final Gearbox GEARBOX_OBJ = new Gearbox(11.0 / 60.0, 18.0 / 30.0);
+		public static final Gearbox GEARBOX_OBJ = Gearbox.fromStages(11.0 / 60.0, 18.0 / 30.0);
 		public static final double GEARBOX_OBJ_RATIO = GEARBOX_OBJ.totalReduction;
 		public static final DCMotor MOTORS = DCMotor.getFalcon500(2);
 		public static final double WHEEL_DIAMETER_INCHES = 6.25;
