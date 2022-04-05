@@ -1,14 +1,12 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.InvertType;
-import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
@@ -19,7 +17,6 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.RobotState;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -27,14 +24,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.OscarRamseteCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.team832.lib.motorcontrol.SmartMCSim;
 import frc.team832.lib.motorcontrol.vendor.CANTalonFX;
+import frc.team832.lib.motors.WheeledPowerTrain;
 
 import static frc.robot.Constants.DrivetrainConstants.*;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -51,9 +48,13 @@ public class DriveSubsystem extends SubsystemBase {
 	private final Field2d m_field = new Field2d();
 
 	// Sim
-	private final TalonFXSimCollection m_leftMotorSim = m_leftMaster.getBaseController().getSimCollection();
-	private final TalonFXSimCollection m_rightMotorSim = m_rightMaster.getBaseController().getSimCollection();
+	// private final TalonFXSimCollection m_leftMotorSim = m_leftMaster.getBaseController().getSimCollection();
+	// private final TalonFXSimCollection m_rightMotorSim = m_rightMaster.getBaseController().getSimCollection();
+	private final SmartMCSim m_leftMotorSim = m_leftMaster.getSim();
+	private final SmartMCSim m_rightMotorSim = m_rightMaster.getSim();
 	private final BasePigeonSimCollection m_imuSim = m_imu.getSimCollection();
+
+	private final WheeledPowerTrain m_powertrain = POWER_TRAIN;
 
 	// private final LinearSystem<N2, N2, N2> m_drivePlant =
 	// LinearSystemId.identifyDrivetrainSystem(AVG_KV, AVG_KA, ANGULAR_KV,
@@ -105,25 +106,31 @@ public class DriveSubsystem extends SubsystemBase {
 	public double getLeftMeters() {
 		var rots = m_leftMaster.getSensorPosition();
 		SmartDashboard.putNumber("DTSubsys/LeftMotorRots", rots);
-		return motorRotsToDistanceMeters(rots);
+		var meters = POWER_TRAIN.calcWheelDistanceMeters(rots);
+		return meters;
 	}
 
 	public double getLeftMetersPerSec() {
-		var velo = m_leftMaster.getSensorVelocity();
-		SmartDashboard.putNumber("DTSubsys/LeftMotorVelo", velo);
-		return motorRotsToVelocityMetersPerSec(velo);
+		var veloRpm = m_leftMaster.getSensorVelocity();
+		SmartDashboard.putNumber("DTSubsys/LeftMotorVeloRpm", veloRpm);
+		var veloMps = m_powertrain.calcMetersPerSec(veloRpm);
+		SmartDashboard.putNumber("DTSubsys/LeftVeloMps", veloMps);
+		return veloMps;
 	}
 
 	public double getRightMeters() {
 		var rots = m_rightMaster.getSensorPosition();
 		SmartDashboard.putNumber("DTSubsys/LeftMotorRots", rots);
-		return motorRotsToDistanceMeters(m_rightMaster.getSensorPosition());
+		var meters = m_powertrain.calcWheelDistanceMeters(rots);
+		return meters;
 	}
 
 	public double getRightMetersPerSec() {
-		var velo = m_rightMaster.getSensorVelocity();
-		SmartDashboard.putNumber("DTSubsys/RightMotorVelo", velo);
-		return motorRotsToVelocityMetersPerSec(velo);
+		var veloRpm = m_rightMaster.getSensorVelocity();
+		SmartDashboard.putNumber("DTSubsys/RightMotorVeloRpm", veloRpm);
+		var veloMps = m_powertrain.calcMetersPerSec(veloRpm);
+		SmartDashboard.putNumber("DTSubsys/RightVeloMps", veloMps);
+		return veloMps;
 	}
 
 	@Override
@@ -144,8 +151,8 @@ public class DriveSubsystem extends SubsystemBase {
 		m_rightMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
 
 		m_driveSim.setInputs(
-				m_leftMotorSim.getMotorOutputLeadVoltage(),
-				-m_rightMotorSim.getMotorOutputLeadVoltage());
+				m_leftMotorSim.getOutputVoltage(),
+				-m_rightMotorSim.getOutputVoltage());
 
 		m_driveSim.update(0.02);
 
@@ -154,50 +161,22 @@ public class DriveSubsystem extends SubsystemBase {
 		SmartDashboard.putNumber("Sim/LeftMeters", leftMeters);
 		SmartDashboard.putNumber("Sim/LeftMps", leftMps);
 
-		m_leftMotorSim.setIntegratedSensorRawPosition(distanceToNativeUnits(leftMeters));
-		m_leftMotorSim.setIntegratedSensorVelocity(velocityToNativeUnits(leftMps));
+		var leftSensorPosition = m_powertrain.calcEncoderRotationsFromMeters(leftMeters);
+		var leftSensorVelocity = m_powertrain.calcEncoderRpmFromMetersPerSec(leftMps);
+		m_leftMotorSim.setSensorPosition(leftSensorPosition);
+		m_leftMotorSim.setSensorVelocity(leftSensorVelocity);
 
 		var rightMeters = -m_driveSim.getRightPositionMeters();
 		var rightMps = -m_driveSim.getRightVelocityMetersPerSecond();
 		SmartDashboard.putNumber("Sim/RightMeters", rightMeters);
 		SmartDashboard.putNumber("Sim/RightMps", rightMps);
 
-		m_rightMotorSim.setIntegratedSensorRawPosition(distanceToNativeUnits(rightMeters));
-		m_rightMotorSim.setIntegratedSensorVelocity(velocityToNativeUnits(rightMps));
+		var rightSensorPosition = m_powertrain.calcEncoderRotationsFromMeters(rightMeters);
+		var rightSensorVelocity = m_powertrain.calcEncoderRpmFromMetersPerSec(rightMps);
+		m_rightMotorSim.setSensorPosition(rightSensorPosition);
+		m_rightMotorSim.setSensorVelocity(rightSensorVelocity);
 
 		m_imuSim.setRawHeading(m_driveSim.getHeading().getDegrees());
-	}
-
-	private int distanceToNativeUnits(double positionMeters) {
-		double wheelRotations = positionMeters / WHEEL_CIRCUMFERENCE_METERS;
-		double motorRotations = wheelRotations * GEARBOX_OBJ.totalReduction;
-		int sensorCounts = (int) (motorRotations * 2048); //  * 2048
-		return sensorCounts;
-	}
-
-	private int velocityToNativeUnits(double velocityMetersPerSecond) {
-		double wheelRotationsPerSecond = velocityMetersPerSecond / WHEEL_CIRCUMFERENCE_METERS;
-		double motorRotationsPerSecond = wheelRotationsPerSecond * GEARBOX_OBJ.totalReduction;
-		double wptRotPerSecond = POWER_TRAIN.calcMotorFromWheel(wheelRotationsPerSecond);
-		boolean calcOk = wptRotPerSecond == motorRotationsPerSecond;
-		double motorRotationsPer100ms = motorRotationsPerSecond / 10;
-		int sensorCountsPer100ms = (int) (motorRotationsPer100ms * 2048); // * 2048
-		System.out.println(calcOk ? ("YE, " + sensorCountsPer100ms) : "FUCK");
-
-		return sensorCountsPer100ms;
-	}
-
-	private double motorRotsToDistanceMeters(double sensorCounts) {
-		double motorRotations = (double) sensorCounts; // 2048;
-		double wheelRotations = motorRotations / GEARBOX_RATIO;
-		double positionMeters = wheelRotations * WHEEL_CIRCUMFERENCE_METERS;
-		return positionMeters;
-	}
-
-	private double motorRotsToVelocityMetersPerSec(double motorRotationsPerSecond) {
-		double wheelRotationsPerSecond = motorRotationsPerSecond / GEARBOX_RATIO;
-		double metersPerSecond = wheelRotationsPerSecond * WHEEL_CIRCUMFERENCE_METERS;
-		return metersPerSecond;
 	}
 
 	public Pose2d getPose() {
@@ -209,8 +188,8 @@ public class DriveSubsystem extends SubsystemBase {
 		m_rightSlave.rezeroSensor();
 
 		if (RobotBase.isSimulation()) {
-			m_leftMotorSim.setIntegratedSensorRawPosition(0);
-			m_rightMotorSim.setIntegratedSensorRawPosition(0);
+			m_leftMotorSim.setSensorPosition(0);
+			m_rightMotorSim.setSensorPosition(0);
 
 			m_driveSim.setPose(newPose);
 			m_driveSim.update(0.02);
@@ -227,6 +206,8 @@ public class DriveSubsystem extends SubsystemBase {
 		m_leftMaster.setVoltage(leftVolts);
 		m_rightMaster.setVoltage(rightVolts);
 	}
+
+
 
 	public CommandBase getRamseteCommand(Trajectory traj, boolean showPath) {
 		var showOnFieldCommand = new InstantCommand(() -> {
@@ -248,22 +229,11 @@ public class DriveSubsystem extends SubsystemBase {
 			LEFT_FEEDFORWARD, RIGHT_FEEDFORWARD, 
 			m_diffDriveKinematics, 
 			this::getWheelSpeeds, 
-			// m_leftPid, m_rightPid, 
-			noPid, noPid,
+			// noPid, noPid,
+			m_leftPid, m_rightPid,
 			this::setMotorVoltages,
 			this
 		);
-
-		// var ramseteCommand = new RamseteCommand(
-		// 		traj,
-		// 		this::getPose,
-		// 		m_ramsete,
-		// 		AVG_FEEDFORWARD,
-		// 		m_diffDriveKinematics,
-		// 		this::getWheelSpeeds,
-		// 		m_leftPid, m_rightPid,
-		// 		this::setMotorVoltages,
-		// 		this);
 
 		return showOnFieldCommand.andThen(resetPoseCommand).andThen(ramseteCommand);
 	}
